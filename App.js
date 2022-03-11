@@ -19,8 +19,8 @@ const App = () => {
 
   const takePicture = function () {
     ImagePicker.openCamera({
-      width: 300,
-      height: 400,
+      width: 1632,
+      height: 1165,
       cropping: true,
     }).then((image) => {
       uploadImage(image);
