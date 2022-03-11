@@ -28,20 +28,38 @@ const App = () => {
   };
 
   const uploadImage = async (image) => {
-    const response = await fetch(image.path);
-    const blob = await response.blob();
+    try{
+      console.log("Entered Upload Image file ");
+      const data = new FormData();
+      let arr=String(image.path).split('/');
+      console.log("arr = ",arr);
+      let filename=arr[arr.length-1];
+      data.append("file", {
+        name: filename,
+        type: image.mime,
+        uri:image.path
+      });
 
-    const data = new FormData();
-    data.append("file", blob);
-
-    const uploadData = await fetch("http://192.168.119.11:3001/upload_file", {
-      method: "post",
-      body: data,
-      headers: {
-        "Content-Type": "multipart/form-data; ",
-      },
-    });
-    console.log("uploadData" + JSON.stringify(uploadData));
+      console.log("data: ",data);
+      let url="http://192.168.119.11:3002/upload_file";//
+      let res = await fetch(url, {
+        method: "POST",
+        body: data,
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        }
+      });
+    let responseJson = await res.json();
+    console.log(responseJson);
+    if (responseJson.status) {
+      console.log(responseJson.message);
+    }else{
+      console.log(responseJson.message)
+    }
+    }catch(err){
+      console.log(err);
+    }
   };
 
   return (
