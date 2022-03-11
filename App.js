@@ -6,102 +6,88 @@
  * @flow strict-local
  */
 
-import React, { useRef, useEffect } from "react";
-import type { Node } from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-  TouchableOpacity
-} from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import axios from "axios";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from "react-native/Libraries/NewAppScreen";
-import { RNCamera } from "react-native-camera";
-
-const PendingView = () => (
-  <View
-    style={{
-      flex: 1,
-      backgroundColor: 'lightgreen',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}
-  >
-    <Text>Waiting</Text>
-  </View>
-);
+// import { RNCamera } from "react-native-camera";
+import ImagePicker from "react-native-image-crop-picker";
+import ResultView from "./ResultView";
 
 const App = () => {
+  const [showResult, setResult] = useState(null);
 
-  const takePicture = async function(camera) {
-    const options = { quality: 0.5, base64: true };
-    const data = await camera.takePictureAsync(options);
-    //  eslint-disable-next-line
-    console.log(data.uri);
+  const takePicture = function () {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+      cropping: true,
+    }).then((image) => {
+      uploadImage(image);
+    });
+  };
+
+  const uploadImage = async (image) => {
+    const response = await fetch(image.path);
+    const blob = await response.blob();
+
+    const data = new FormData();
+    data.append("file", blob);
+
+    const uploadData = await fetch("http://192.168.119.11:3001/upload_file", {
+      method: "post",
+      body: data,
+      headers: {
+        "Content-Type": "multipart/form-data; ",
+      },
+    });
+    console.log("uploadData" + JSON.stringify(uploadData));
   };
 
   return (
     <View style={styles.container}>
-        <RNCamera
-          style={styles.preview}
-          type={RNCamera.Constants.Type.back}
-          flashMode={RNCamera.Constants.FlashMode.off}
-          androidCameraPermissionOptions={{
-            title: 'Permission to use camera',
-            message: 'We need your permission to use your camera',
-            buttonPositive: 'Ok',
-            buttonNegative: 'Cancel',
-          }}
-          androidRecordAudioPermissionOptions={{
-            title: 'Permission to use audio recording',
-            message: 'We need your permission to use your audio',
-            buttonPositive: 'Ok',
-            buttonNegative: 'Cancel',
-          }}
-        >
-          {({ camera, status, recordAudioPermissionStatus }) => {
-            if (status !== 'READY') return <PendingView />;
-            return (
-              <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>
-                <TouchableOpacity onPress={() => takePicture(camera)} style={styles.capture}>
-                  <Text style={{ fontSize: 14 }}> SNAP </Text>
-                </TouchableOpacity>
-              </View>
-            );
-          }}
-        </RNCamera>
-      </View>
+      {!showResult ? (
+        <View style={styles.snapContainer}>
+          <View
+            style={{ flex: 0, flexDirection: "row", justifyContent: "center" }}
+          >
+            <TouchableOpacity
+              onPress={() => takePicture()}
+              style={styles.capture}
+            >
+              <Text style={{ fontSize: 14, color: "white" }}> SNAP </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <ResultView />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
-    backgroundColor: 'black',
+    flexDirection: "column",
+    backgroundColor: "white",
+  },
+  snapContainer: {
+    justifyContent: "center",
+    flex: 1,
   },
   preview: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    justifyContent: "flex-end",
+    alignItems: "center",
   },
   capture: {
     flex: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "blue",
     borderRadius: 5,
     padding: 15,
     paddingHorizontal: 20,
-    alignSelf: 'center',
+    alignSelf: "center",
     margin: 20,
   },
 });
