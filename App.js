@@ -6,8 +6,8 @@
  * @flow strict-local
  */
 
-import React from 'react';
-import type {Node} from 'react';
+import React, { useRef, useEffect } from "react";
+import type { Node } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -16,7 +16,8 @@ import {
   Text,
   useColorScheme,
   View,
-} from 'react-native';
+  TouchableOpacity
+} from "react-native";
 
 import {
   Colors,
@@ -24,88 +25,84 @@ import {
   Header,
   LearnMoreLinks,
   ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+} from "react-native/Libraries/NewAppScreen";
+import { RNCamera } from "react-native-camera";
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+const PendingView = () => (
+  <View
+    style={{
+      flex: 1,
+      backgroundColor: 'lightgreen',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <Text>Waiting</Text>
+  </View>
+);
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const takePicture = async function(camera) {
+    const options = { quality: 0.5, base64: true };
+    const data = await camera.takePictureAsync(options);
+    //  eslint-disable-next-line
+    console.log(data.uri);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.container}>
+        <RNCamera
+          style={styles.preview}
+          type={RNCamera.Constants.Type.back}
+          flashMode={RNCamera.Constants.FlashMode.off}
+          androidCameraPermissionOptions={{
+            title: 'Permission to use camera',
+            message: 'We need your permission to use your camera',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+          androidRecordAudioPermissionOptions={{
+            title: 'Permission to use audio recording',
+            message: 'We need your permission to use your audio',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+        >
+          {({ camera, status, recordAudioPermissionStatus }) => {
+            if (status !== 'READY') return <PendingView />;
+            return (
+              <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>
+                <TouchableOpacity onPress={() => takePicture(camera)} style={styles.capture}>
+                  <Text style={{ fontSize: 14 }}> SNAP </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+        </RNCamera>
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    flexDirection: 'column',
+    backgroundColor: 'black',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  preview: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  capture: {
+    flex: 0,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 15,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    margin: 20,
   },
 });
 
